@@ -61,7 +61,7 @@ def parse_output(outfile,numparse):
 					myRow.append(row)
 					d_imm[row[15]] = myRow
 				else:
-					d_imm.get(row[14]).append(row)
+					d_imm.get(row[15]).append(row)
 			elif (row[16]=='pac') and (int(row[17]) <= int(numparse) ):
 				if row[15] not in d_pac:
 					myRow = []
