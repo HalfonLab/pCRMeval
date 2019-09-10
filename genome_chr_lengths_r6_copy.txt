@@ -1,0 +1,7 @@
+#data from release notes for BDGP release 6, Table 2 (http://flybase.org/static_pages/docs/release_notes.html
+X	23542271
+2L	23513712
+2R	25286936
+3L	28110227
+3R	32079331
+4	1348131
