@@ -45,30 +45,30 @@ def parse_output(outfile,numparse):
 
 		for row in rows:
 		#based on the 14th column(names of different data sets) and 15th column (statistical method used) of scrmshaw_joined_output file giving values to each of the three method`s dictionaries
-			if (row[15]=='hexmcd') and (int(row[16]) <= int(numparse)):
+			if (row[16]=='hexmcd') and (int(row[17]) <= int(numparse)):
 				#print(numparse)
-				if row[14] not in d_hexmcd:
+				if row[15] not in d_hexmcd:
 					myRow = [] # create a new list to use
 					myRow.append(row) # add my new row to our new list
-					d_hexmcd[row[14]] = myRow  #create a new entry if it isn't in the dictionary already
+					d_hexmcd[row[15]] = myRow  #create a new entry if it isn't in the dictionary already
 
 				else:
-					d_hexmcd.get(row[14]).append(row)
+					d_hexmcd.get(row[15]).append(row)
 					#count_hexmcd=count_hexmcd+1
-			elif (row[15]=='imm')and (int(row[16]) <= int(numparse)):
-				if row[14] not in d_imm:
+			elif (row[16]=='imm')and (int(row[17]) <= int(numparse)):
+				if row[15] not in d_imm:
 					myRow = []
 					myRow.append(row)
-					d_imm[row[14]] = myRow
+					d_imm[row[15]] = myRow
 				else:
 					d_imm.get(row[14]).append(row)
-			elif (row[15]=='pac') and (int(row[16]) <= int(numparse) ):
-				if row[14] not in d_pac:
+			elif (row[16]=='pac') and (int(row[17]) <= int(numparse) ):
+				if row[15] not in d_pac:
 					myRow = []
 					myRow.append(row)
-					d_pac[row[14]] = myRow
+					d_pac[row[15]] = myRow
 				else:
-					d_pac.get(row[14]).append(row)
+					d_pac.get(row[15]).append(row)
 					#count_pac=count_pac+1
 
 	#calculating number of keys(datasets) each dictionary ends up having		
