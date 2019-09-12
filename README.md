@@ -34,7 +34,7 @@ pybedtools, statistics, scipy, numpy, pandas, csv and itertools
 
 For evaluating SCRMshaw output, following script could be used (just change the file names according to your data)
 
->python generic_evaluationPipeline_NO_FE.py  -nameOfmet SCRMshaw  -fullredfly without_chrallredfly_2.5kb.July2017.txt  -subsetcrmsExpBed without_chrredfly-analysis-set.assignments.2015.REDFly_format.txt  -finalcrmsExp redfly_analysis_set.assignments.2015.txt  -tset False  -listTset trainingset_assignments_2010.txt  -pattern TRUE  -e exons.bed  -drosog genome_chr_lengths_r6_copy.txt  -so scrmshawOutput_peaksCalledover5kcrms_allSets_IMM.bed  -o output -cont False  -goodHits True  -p 35000  -s 10  -pattern True 
+>python pCRM_eval.py  -nameOfmet SCRMshaw  -fullredfly without_chrallredfly_2.5kb.July2017.txt  -subsetcrmsExpBed without_chrredfly-analysis-set.assignments.2015.REDFly_format.txt  -finalcrmsExp redfly_analysis_set.assignments.2015.txt  -tset False  -listTset trainingset_assignments_2010.txt  -pattern TRUE  -e exons.bed  -drosog genome_chr_lengths_r6_copy.txt  -so scrmshawOutput_peaksCalledover5kcrms_allSets_IMM.bed  -o output -cont False  -goodHits True  -p 35000  -s 10  -pattern True 
 
 #3. PARAMETERS
 
