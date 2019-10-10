@@ -42,7 +42,7 @@ For evaluating SCRMshaw output, following script could be used (just change the 
 	-fullredfly	<str>	This file includes everything in REDfly annotated as a CRM, including evidence solely from cell culture experiments, that is no longer than 2.5kb in length. It'92s about 16,000 entities.  
 	-subsetcrmsExpBed <str>	These are the expression-mapped CRMs, use to assess training set specificity, in the form of list
 	-finalcrmsExp	<str>	This will be the bed formatted version of expression-mapped CRMs file. It will have the coordinates with the names of crms. 	
-	-tset	 <str>	This is the binary variable, which takes the value of True or False depending upon if you have the training set information or not (Supervised vs unsupervised)
+	-tset	 <str>	This is the string variable, which takes the value of Bed or List depending on the format of the training set information
 	-listTset	<str>	If the training set information is in the form of list, provide its name here.
 	-bedTset	<str> If the training set information is in the form of bed, provide the name here.
 	-pattern	<str>	This is binary variable which take the value of True or False depending on if user wants to test the specificity of the training set. 
