@@ -353,6 +353,16 @@ def intersect_scrms_and_modifiedCrms(ftype,methName,dtName,sortedMergedModifiedC
 			print('No intesect found')
 			a_and_b_new.saveas(subdirectory+'/ResultOfIntersectBasedOnScrms_modifiedcrms_and_'+ftype+'_'+methName+'_'+dtName+'.bed')
 		#print(a_and_b_new)
+		
+	elif ftype=="expressionMappedS":
+		
+		a_and_b_new=sortedMergedScrmsBed.intersect(sortedMergedModifiedCrmsBed,wo=True,f=0.10)
+		#print(a_and_b_new)
+		if a_and_b_new != '':
+			a_and_b_new.merge(c=7,o='distinct').saveas(subdirectory+'/ResultOfIntersectBasedOnScrms_modifiedcrms_and_'+ftype+'_'+methName+'_'+dtName+'.bed')
+		else:
+			print('No intesect found')
+			a_and_b_new.saveas(subdirectory+'/ResultOfIntersectBasedOnScrms_modifiedcrms_and_'+ftype+'_'+methName+'_'+dtName+'.bed')
 	#counting number of hits (crms of scrmshaw output that matched with modified crms)
 	a_and_b_count=a_and_b2.count()
 	#print(a_and_b_count)
@@ -361,7 +371,11 @@ def intersect_scrms_and_modifiedCrms(ftype,methName,dtName,sortedMergedModifiedC
 				for name in files:
 					if name=='ResultOfIntersectBasedOnScrms_modifiedcrms_and_'+ftype+'_'+methName+'_'+dtName+'.bed':
 						p6=os.path.abspath(os.path.join(root,name))
-	
+	elif ftype=="expressionMappedS":
+		for root, dirs, files in os.walk(os.getcwd()):
+				for name in files:
+					if name=='ResultOfIntersectBasedOnScrms_modifiedcrms_and_'+ftype+'_'+methName+'_'+dtName+'.bed':
+						p6=os.path.abspath(os.path.join(root,name))
 	else:
 		for root, dirs, files in os.walk(os.getcwd()):
 						for name in files:
@@ -456,7 +470,7 @@ def sort_merge_redfly_find_size(ftype,file,dataset,method):
 
 #----------------------------------------------------------------------------------------------------------------------------
 #This function will take in the intersected file of SCRMShaw predictions and expression mapped crms, and calculate if the predictions belong to the training's group of expression, if not then to which other group it belongs
-def parse_intersected_scrmshaw(outfile,dSet,intersected,meth):
+def parse_intersected_scrmshaw(ftype,outfile,dSet,intersected,meth):
 	countHits=0
 	numberOfSCrmsMatchedToExpression=0
 	numberOfSCrmsMatchedToExpression=0
@@ -464,8 +478,9 @@ def parse_intersected_scrmshaw(outfile,dSet,intersected,meth):
 	hitsWithExpression=['']
 	
 	
-	file2= open(os.path.join(subdirectory,"Hits_modifiedCrms_Scrms_"+dSet+"_"+meth),"w")
-	file3=open(os.path.join(subdirectory,"Hits_NotMatchedWithItsGroup_modifiedCrms_Scrms_"+dSet+"_"+meth),"a")
+	file2= open(os.path.join(subdirectory,"Hits_modifiedCrms_Scrms_"+ftype+"_"+dSet+"_"+meth),"w")
+	fileX=open(os.path.join(subdirectory,"SCRMs_modifiedCrms_Scrms_"+ftype+"_"+dSet+"_"+meth),"w")
+	file3=open(os.path.join(subdirectory,"Hits_NotMatchedWithItsGroup_modifiedCrms_Scrms_"+ftype+"_"+dSet+"_"+meth),"a")
 	fileE=open(outfile+'_ExpressionPatternRecovereyDistribution.bed','a')
 	
 	with open (intersected) as file:
@@ -494,6 +509,8 @@ def parse_intersected_scrmshaw(outfile,dSet,intersected,meth):
 						numberOfSCrmsMatchedToExpression=numberOfSCrmsMatchedToExpression+1
 						
 						#print(hitsWithExpression[i]+ " is in "+ matchedCrmsString)
+						#print(row)
+						fileX.write(row[0]+"\t"+row[1]+"\t"+row[2]+"\t"+row[3])
 						file2.write(hitsWithExpression[i])
 						file2.write('\n')
 						break
@@ -528,6 +545,7 @@ def parse_intersected_scrmshaw(outfile,dSet,intersected,meth):
 		fileE.write('\n')
 
 	file2.close()
+	fileX.close()
 	file3.close()
 
 	if patternRecovery=='False' or patternRecovery=="F" or patternRecovery=="FALSE":
@@ -894,7 +912,7 @@ def main():
 	parser.add_argument('-predInBed','--predictionsInBed',help= 'Set of predictions in bed format')
 	parser.add_argument('-fullredfly','--fullcrmFile',help='File of of all known crms: downloaded from redfly in bed format',required=True)
 	parser.add_argument('-so','--scrmJoinedOutputFile',help='Scrmshaw Output file')
-	parser.add_argument('-tset','--tsetBedOrNot',help='If training set information is in the bed format or not')
+	parser.add_argument('-tsetBedOrList','--tsetBedOrNot',help='If training set information is in the bed format or not')
 	parser.add_argument('-bedTset','--bedTsetFormat',help='File of training set CRMs in the bed format')
 	parser.add_argument('-listTset','--tsetListFormat',help='File of training set CRMs in the list format')
 	parser.add_argument('-pattern','--patternRecovery',help='if your input has nothing to do with how many expression paterrn crms recovered,set this parameter to False. Default value is True',default='True')
@@ -999,266 +1017,285 @@ def main():
 		
 						
 		methods=['imm','hexmcd','pac']
-		
+		#if the training set is in bed format then using its coordinate information for evaluation purpose, e.g to find out sensitivity and recovery etc
+		if tsetBedOrNot=="BED" or tsetBedOrNot=="bed" or tsetBedOrNot=="Bed" or tsetBedOrNot=="notList":
+			print("use non scrmshaw method")
 		#creating dictionary from the file that contain names of all crms against each training set; use to assess training set sensitivity; in the format name of sets being keys and their respective crms as key's values
-		path_to_known_crms=os.path.abspath(tsetListFormat) 
-		with open(path_to_known_crms) as fin:
-			rows = (line.split('\t') for line in fin )
-			d = {row[0].strip(':\:'):row[1:] for row in rows }			
+		#if training set provided is not in bed then extract tset coordinates information from REDfly based on the names in the list provided through creating dictionary
+		elif tsetBedOrNot=="LIST" or tsetBedOrNot=="list" or tsetBedOrNot=="notBed" or tsetBedOrNot=="List":
+			path_to_known_crms=os.path.abspath(tsetListFormat) 
+			with open(path_to_known_crms) as fin:
+				rows = (line.split('\t') for line in fin )
+				d = {row[0].strip(':\:'):row[1:] for row in rows }			
 		
 
-		#Creating list to iterate through three methods
-		methods_val=[None,None,None]
+			#Creating list to iterate through three methods
+			methods_val=[None,None,None]
 		
-		#Parsing the output file into separate files for each training set and each method via creating three dictionaries for each method: keys being the names of data sets associated with that method 
-		scrmJoinedOutputFile=os.path.abspath(scrmJoinedOutputFile) 
-		methods_val[0],methods_val[1],methods_val[2]=parse_output(scrmJoinedOutputFile,35000)
+			#Parsing the output file into separate files for each training set and each method via creating three dictionaries for each method: keys being the names of data sets associated with that method 
+			scrmJoinedOutputFile=os.path.abspath(scrmJoinedOutputFile) 
+			methods_val[0],methods_val[1],methods_val[2]=parse_output(scrmJoinedOutputFile,35000)
 		
-		#This loop is used to iterate through all three method's dictionary:
-		for num in range(len(methods)):
-			print("Now method:"+methods[num])
-			print("sets in this method "+str(methods_val[num]))
-			#This loop is used to iterate through all the training sets in the given methods dictionary
-			for x in methods_val[num]:
-				if x in d.keys():
-					#Getting tmp path of methods dictionary file
-					for root, dirs, files in os.walk(os.getcwd()):
-						for name in files:
-							if name==methods[num]+'_'+x+'_fullLength.bed':
-								unsorted_indScrmOutputfile=os.path.abspath(os.path.join(root,name))
+			#This loop is used to iterate through all three method's dictionary:
+			for num in range(len(methods)):
+				print("Now method:"+methods[num])
+				print("sets in this method "+str(methods_val[num]))
+				#This loop is used to iterate through all the training sets in the given methods dictionary
+				for x in methods_val[num]:
+					if x in d.keys():
+						#Getting tmp path of methods dictionary file
+						for root, dirs, files in os.walk(os.getcwd()):
+							for name in files:
+								if name==methods[num]+'_'+x+'_fullLength.bed':
+									unsorted_indScrmOutputfile=os.path.abspath(os.path.join(root,name))
 							
 							
-					#if user wants to evaluate the result in a continuous fashion, like evaluate at every 500 predcitions..
-					if continuous=="True" or continuous=="TRUE" or continuous=="T":		
-						numberparse=250
-					else:
-						numberparse=int(numParse)
-				
-					#if user wants to evaluate only top good hits based on the composite curve method 
-					if goodHitsOnly == "True" or goodHitsOnly== "true" or goodHitsOnly== "TRUE" or goodHitsOnly =="T":
-						numParse,numScore,numAmp = topGoodPrediction(unsorted_indScrmOutputfile)
-						if continuous=="False" or continuous=="FALSE" or continuous=="F":
-							numberparse=numParse
-							print("Top pred after first(amplitude cutoff): " + str(numParse))
-						
-					else:
-						numParse=int(numParse)
-						print("user specified hits" + str(numParse))
-				
-					tab1=methods[num]								
-					#if user has set it up to find the continuous evaluation it will start fromm 100 and go up to max otherwise it would run only one time
-					while numberparse <= numParse:
-						print("Numparse "+str(numberparse)+" parse "+str(numParse))
-						
-						#creating files for keeping track of distribution of expression recovered crms 
-						fileE=open(outfile_random+'_ExpressionPatternRecovereyDistribution.bed','w')
-						with open(outfile_random+'_ExpressionPatternRecovereyDistribution.bed','a') as e:
-							e.write(stringOfSizes+'\n')
-							e.write(stringOfGroupNames+'\n')					
-					
-						#extract number of lines of peaks given by the user
-						noOflinesExtracted,unsorted_indScrmOutputfile=parse_output_individual(unsorted_indScrmOutputfile,numberparse,x,tab1)
-						#if user wants to evaluate top hits only then extract those and discard the rest of the data
-						if goodHitsOnly == "True" or goodHitsOnly== "true" or goodHitsOnly== "TRUE" or goodHitsOnly =="T":
-							noOflinesExtracted,unsorted_indScrmOutputfile=extract_below_cutoff_vals(unsorted_indScrmOutputfile,numberparse,x,tab1,numScore,numAmp)
-							print('Number of Top Predictions: '+str(noOflinesExtracted))
-						
-						#sorting and merging the each unique scrmshaw output file (the files that have been created earlier by d_imm dictionary for each different data set > probably unsorted.)
-						sortedMergedScrmsFilePath,numOfsortedMergedPredictedCrms=sort_and_merge_output(x,tab1,unsorted_indScrmOutputfile)	
-				
-						#creating a modified list of redfly files(FULLCRMS and subsetExpressionMappedCrmsBedFormat) will be called as "modifiedCrms2010 and ModifiedCrms" which will not have the crms that were used as training set for scrmshaw
-	
-						#excluding training set crms from redfly file and expression mapped file..based on names...will have modified and excluded file 
-						totalKcrms,countModifiedCrms,excludedCrmsCount,modifiedCrmsFilePath,excludedCrmsFilePath= exclude_training_set_crms("redfly",x,tab1,x,fullCrms)
-						totalKSubsetcrms,countSubsetModifiedCrms,excludedSubsetCrmsCount,modifiedSubsetCrmsFilePath,excludedSubsetCrmsFilePath= exclude_training_set_crms("expressionMapped",x,tab1,x,expressionMappedCrmsBedFormat)
-							
-						#Total known crms in both redfly files and expression mapped file after sorting and merging
-						size_of_sortedMergedCrms=sort_merge_redfly_find_size("redfly",fullCrms,x,tab1)
-						size_of_sortedMergedSubsetCrms=sort_merge_redfly_find_size("expressionMapped",expressionMappedCrmsBedFormat,x,tab1)
-
-						#converting to bed format
-						sortedMergedScrmsBed=bed_conversion(sortedMergedScrmsFilePath)
-						excludedCrmsFilePathBed=bed_conversion(excludedCrmsFilePath)
-						
-																				############THREE MEASURES OF EVALUATION###############
-						
-						#`-------------------------------------	1: Tset Sensitivity---------------------------
-						print("Calculating Training set Sensitivity")
-						#sorting excluded crms
-						sortedExcludedCrms=sort_and_merge_tset(excludedCrmsFilePathBed,x,tab1)		
-						#BED conversion
-						sortedExcludedCrmsBed=bed_conversion(sortedExcludedCrms)
-						countCommonScrmAndExcluded=intersect_Scrm_and_Excluded_crms(x,tab1,sortedMergedScrmsBed,sortedExcludedCrmsBed)
-						#print("TsetRecovered "+str(countCommonScrmAndExcluded))	
-						#percentage of sensitivity of result
-						#percentageOfSensitivity="{0:.2f}%".format((countCommonScrmAndExcluded/excludedCrmsCount)*100) #or  equal print(len(d[x]))
-						percentageOfSensitivity=countCommonScrmAndExcluded/excludedCrmsCount
-						#print("Percent True Training set Recovered "+str(percentageOfSensitivity))	
-			
-						#calculating expected Training set Recovery
-						ex=os.path.abspath(exons)
-						g=os.path.abspath(drosoGenome)
-						#Generating random data from genome and finding Significance of SCRMSHAW training set sensitivity
-						mean2V,med2V,sd2V,min2Val,max2Val,stats2,z_value2,p_value2=shuffle(sortedExcludedCrmsBed,sortedMergedScrmsBed,ex,g,countCommonScrmAndExcluded,int(numberOfShuffles))
-						#percentage of expected sensitivity of result
-						
-						percentageOfExpectedSensititvity=(mean2V/excludedCrmsCount)
-						#calculating differences in percentages of sensitivity of scrms vs expected 
-						#differenceInPercentagesTsetSensitivity= "{0:.2f}".format(((countCommonScrmAndExcluded/excludedCrmsCount)*100)-((mean2V/excludedCrmsCount)*100))
-						differenceInPercentagesTsetSensitivity= (countCommonScrmAndExcluded/excludedCrmsCount)-((mean2V/excludedCrmsCount))
-						#print("Percent Random Training set Recovered "+str(percentageOfExpectedSensititvity))	
-				
-						#	--------------------------------2: REDfly Recovery ----------------------------
-						print("Calculating REDfly Recovery")
-						#sorting and merging the files of modified crm(redfly files excluding tsets crms)
-						sortedMergedModifiedCrmsFilePath,sizeOfSortedMergedModifiedCrms=sort_and_merge_modifiedCrms("redfly",modifiedCrmsFilePath,x,tab1)
-							
-						#converting to bed format
-						sortedMergedModifiedCrmsBed=bed_conversion(sortedMergedModifiedCrmsFilePath)
-					
-						#Finding the "Number of HITS" (common crms between modified crms and the individual parsed sorted+merged scrmshaw output)
-						no_of_overlaps2,pathOfIntersectResult=intersect_scrms_and_modifiedCrms("redfly",x,tab1,sortedMergedModifiedCrmsBed,sortedMergedScrmsBed)
-						
-						#for calculating number of redfly recovered 
-						#no_of_overlaps=redfly_recovered(pathOfIntersectResult)
-						pathOfIntersectResultBed=bed_conversion(pathOfIntersectResult)
-						no_of_overlaps=pathOfIntersectResultBed.count()
-						
-						
-						percentageOfOverlaps=(no_of_overlaps/(numOfsortedMergedPredictedCrms-countCommonScrmAndExcluded))
-						#print("Percent True Redfly Recovered =: "+str(percentageOfOverlaps))
-						
-						print("Calculating REDfly Recovery Recall")
-						#Recall/Sensitivity of REDfly recovery TP/TP+FN .. True positive=SCRMs recovered REDfly CRMs, False Negative= Total REDfly CRMs - True Positives
-						percentageRecallREDfly=(no_of_overlaps/(no_of_overlaps+(sizeOfSortedMergedModifiedCrms-no_of_overlaps)))
-						
-						##calculating expected REDfly Recovery
-						#Generating random data from genome and finding Significance of SCRMSHAW no of hits
-						meanV,medV,sdV,minVal,maxVal,stats,z_value,p_value=shuffle(sortedMergedModifiedCrmsBed,sortedMergedScrmsBed,ex,g,no_of_overlaps,int(numberOfShuffles))
-							
-						#print("Exp Redfly Recovered =: "+str(meanV))		
-						#Percentage of Expected redfly recovered
-						percentageOfExpectedOverlaps=(meanV/(numOfsortedMergedPredictedCrms-countCommonScrmAndExcluded))
-						#print("Percent Random Expectation Redfly Recovered =: "+str(percentageOfExpectedOverlaps))	
-						
-						#Difference in percentages of scrms and expected redfly recovered
-						differenceInPercentagesRedflyRecovered=((no_of_overlaps/numOfsortedMergedPredictedCrms))-((meanV/numOfsortedMergedPredictedCrms))		
-						
-						
-						#	--------------------------------3:Expression Pattern Precision-------------------------------------
-						print("Calculating Expression pattern Precision and Recall")
-						#basically repeat all the steps that we did with actual redfly like extract tset from the prediction file and then intersect it ..etc
-						
-						#sorting and merging the files of modified expression mapped crm(expression mapped redfly files excluding tsets crms)
-						#sortedMergedModifiedSubsetCrmsFilePath,sizeOfSortedMergedModifiedSubsetCrms=sort_and_merge_modifiedCrms("expressionMapped",modifiedSubsetCrmsFilePath,x,tab1,)
-						sortedMergedModifiedSubsetCrmsFilePath,sizeOfSortedMergedModifiedSubsetCrms=sort_expressionMappedCrms("expressionMapped",modifiedSubsetCrmsFilePath,x,tab1,)
-						sortedMergedModifiedSubsetCrmsBed=bed_conversion(sortedMergedModifiedSubsetCrmsFilePath)
-
-						
-															##-----------expression pattern Recovery
-						#for finding out no of hits matched to expected expression we need to intersect file of subset(because that is the file of those crms having some expression)
-						no_of_overlapsSubset,pathOfSubsetIntersectResult= intersect_scrms_and_modifiedCrms("expressionMapped",x,tab1,sortedMergedModifiedSubsetCrmsBed,sortedMergedScrmsBed)
-						pathOfSubsetIntersectResultBed=bed_conversion(pathOfSubsetIntersectResult)
-						no_of_overlapsX=pathOfSubsetIntersectResultBed.count()
-						#print("Expression Pattern Recovered =: "+str(no_of_overlapsSubset))							
-						#print("recovery defined by : num of scrms recovered any crms from redfly expr mapped file divide by total num of predictions excl ones used for tset")
-						percentageOfHitsRecoveredExpressionPattern=no_of_overlapsSubset/(numOfsortedMergedPredictedCrms-countCommonScrmAndExcluded)
-						#print("Percent Expression Pattern Recovered =: "+str(percentageOfHitsRecoveredExpressionPattern))	
-						
-						#Generating random data from genome and finding Significance of SCRMSHAW no of hits
-						meanExp,medExp,sdExp,minVExp,maxVExp,statsExp,zExp,pExp=shuffle(sortedMergedModifiedSubsetCrmsBed,sortedMergedScrmsBed,ex,g,no_of_overlapsX,int(numberOfShuffles))
-												
-						#Percentage of Expected expression pattern recovered
-						#print("Expected Expression Pattern Recovered =: "+str(meanExp))
-						percentageOfExpectedHitsRecoveredExpressionPattern=meanExp/(numOfsortedMergedPredictedCrms-countCommonScrmAndExcluded)
-						#print("Percent Expected Expression Pattern Recovered =: "+ str(percentageOfExpectedHitsRecoveredExpressionPattern))	
-
-						
-															#---------Overlap with shared annotation (Precision)
-						#calculating expected Precision
-						# getting number of crms predicted by scrmshaw that matches with expected expression pattern
-						hitsMatchedExpression,numberOfKnownCrmsCausesExpressionInTset,numberOfAnyPatternRecovered=parse_intersected_scrmshaw(outfile,x,pathOfSubsetIntersectResult,tab1)
-						
-						
-						#Expression Pattern Precision: TP/TP+FP..... True Positives= SCRMs with correct expression pattern...False Positive=SCRMs with incorrect expression pattern (SCRMs with any pattern - TP)
-						percentageExpressionPatternPrecision=hitsMatchedExpression/numberOfAnyPatternRecovered
-						#print("Percent Precision =: "+str(percentageExpressionPatternPrecision))	
-						
-						#Expression Pattern Recall/Sensitivity: TP/TP+FN ..... True Positives= SCRMs with correct expression pattern..False Negative= Total Known CRMs with Expression Pattern in Training set - TP
-						percentageExpressionPatternRecall= hitsMatchedExpression/(hitsMatchedExpression+(numberOfKnownCrmsCausesExpressionInTset-hitsMatchedExpression))
-						
-						#trying to see the expected distribtuion across all the sets..
-						#print("Random Expectation Values")
-						percentageExpressionPatternPrecisionExp=[]
-						for i in range(numberOfShuffles):
-							shuffled2=sortedMergedScrmsBed.shuffle(excl=ex, noOverlapping=True, g=g).sort().saveas('shuffled')	
-							shuffledpath=os.path.abspath('shuffled')
-							shuffledBed=bed_conversion(shuffledpath)		
-							no_of_overlapsR,pathOfIntersectResultR=intersect_scrms_and_modifiedCrms("expressionMapped",x,tab1,sortedMergedModifiedSubsetCrmsBed,shuffledBed)		
-							
-							
-							hitsMatchedExpressionExp,numberOfKnownCrmsCausesExpressionInTsetExp,numberOfAnyPatternRecoveredExp=parse_intersected_scrmshaw(outfile_random,x,pathOfIntersectResultR,tab1)
-							percentageExpressionPatternPrecisionExp.append(hitsMatchedExpressionExp/numberOfAnyPatternRecoveredExp)
-							
-						#calculating summary stats for the expected distribution result
-					
-						#calculating p values for Precision 
-						#get summary stats 
-						maxRspec=max(percentageExpressionPatternPrecisionExp)
-						minRspec=min(percentageExpressionPatternPrecisionExp)
-						meanRspec=statistics.mean(percentageExpressionPatternPrecisionExp)
-						medianRspec=statistics.median(percentageExpressionPatternPrecisionExp)
-						sdRspec=statistics.stdev(percentageExpressionPatternPrecisionExp)
-						#print("Median Percent Precision Expected =: "+str(medianRspec))	
-						summary_stats="Mean= "+ str(meanRspec)+"\nMedian= "+str(medianRspec)+"\nStandard Deviation= "+str(sdRspec)+"\nMinimum value= "+str(minRspec)+"\nMaximum Value= "+str(maxRspec)
-
-						#from a_and_b_count and mean sd of above array
-						#print(a_and_b_count)
-						try:	
-							zRspec=float((percentageExpressionPatternPrecision-meanRspec)/sdRspec)
-							#print(zRspec)
-							#pRspec=stats.norm.sf(float(abs(zRspec)))
-							pRspec= 1 - scipy.special.ndtr(zRspec)
-							#print(pRspec)
-						except ZeroDivisionError:
-							np.seterr(divide='ignore', invalid='ignore')
-							pRspec=0
-						#return mean,median,sd,minV,maxV,summary_stats,z,p
-						
-						differenceInPercentagesExpressionPatternRecovered=percentageExpressionPatternPrecision-meanRspec
-						
-						### Following lines of code calculates and write fold enrichment along with the Precision of individual sets in the Expression Pattern Distribtuiton File
-						
-						calculating_sum_stats_random_file(outfile)
-						#calculating fold enrichment 
-						calculateFoldEnrichment(outfile,x,tab1)
-						
-						#temporary transpose and displaying on the terminal
-						transposeDistributionFile_temp(outfile,x)
-						#max_FE(outfile,x)
-
-						#writing to files depending upon _condition applied depending upon if Expression Pattern Recovery step is needed or not
-						printList=[]
-						
-						if patternRecovery=='True' or  patternRecovery == "T" or patternRecovery=="TRUE":
-							printList.extend([x,tab1,str(excludedCrmsCount),str(size_of_sortedMergedSubsetCrms),str(sizeOfSortedMergedModifiedSubsetCrms),str(size_of_sortedMergedCrms),str(sizeOfSortedMergedModifiedCrms),str(numOfsortedMergedPredictedCrms),str(countCommonScrmAndExcluded),str(percentageOfSensitivity),str(mean2V),str(percentageOfExpectedSensititvity),str(differenceInPercentagesTsetSensitivity),str(p_value2),str(no_of_overlaps),str(percentageOfOverlaps),str(meanV),str(percentageOfExpectedOverlaps),str(differenceInPercentagesRedflyRecovered),str(p_value),str(percentageRecallREDfly),str(numberOfKnownCrmsCausesExpressionInTset),str(no_of_overlapsSubset),str(percentageOfHitsRecoveredExpressionPattern),str(meanExp),str(percentageOfExpectedHitsRecoveredExpressionPattern),str(hitsMatchedExpression),str(numberOfAnyPatternRecovered),str(percentageExpressionPatternPrecision),str(meanRspec),str(pRspec),str(differenceInPercentagesExpressionPatternRecovered),str(percentageExpressionPatternRecall)]) 
-							#table_file(outfile,printList)
-							#table_file(outfile,x,tab1,str(excludedCrmsCount),str(size_of_sortedMergedSubsetCrms),str(sizeOfSortedMergedModifiedSubsetCrms),str(size_of_sortedMergedCrms),str(sizeOfSortedMergedModifiedCrms),str(numOfsortedMergedPredictedCrms),str(countCommonScrmAndExcluded),str(percentageOfSensitivity),str(mean2V),str(percentageOfExpectedSensititvity),str(differenceInPercentagesTsetSensitivity),str(p_value2),str(no_of_overlaps),str(percentageOfOverlaps),str(meanV),str(percentageOfExpectedOverlaps),str(differenceInPercentagesRedflyRecovered),str(p_value),str(numberOfKnownCrmsCausesExpressionInTset),str(no_of_overlapsSubset),str(percentageOfHitsRecoveredExpressionPattern),str(meanExp),str(percentageOfExpectedHitsRecoveredExpressionPattern),str(hitsMatchedExpression),str(numberOfAnyPatternRecovered),str(percentageExpressionPatternPrecision),str(meanRspec),str(pRspec),str(differenceInPercentagesExpressionPatternRecovered))						
+						#if user wants to evaluate the result in a continuous fashion, like evaluate at every 500 predcitions..
+						if continuous=="True" or continuous=="TRUE" or continuous=="T":		
+							numberparse=250
 						else:
-							printList.extend([x,tab1,str(excludedCrmsCount),str(size_of_sortedMergedCrms),str(sizeOfSortedMergedModifiedCrms),str(numOfsortedMergedPredictedCrms),str(countCommonScrmAndExcluded),str(percentageOfSensitivity),str(mean2V),str(percentageOfExpectedSensititvity),str(differenceInPercentagesTsetSensitivity),str(p_value2),str(no_of_overlaps),str(percentageOfOverlaps),str(meanV),str(percentageOfExpectedOverlaps),str(differenceInPercentagesRedflyRecovered),str(p_value),str(percentageRecallREDfly)])
-							#table_file_excludingExpressionRecovered(outfile,printList)
-							#table_file_excludingExpressionRecovered(outfile,x,tab1,str(excludedCrmsCount),str(size_of_sortedMergedCrms),str(sizeOfSortedMergedModifiedCrms),str(numOfsortedMergedPredictedCrms),str(countCommonScrmAndExcluded),str(percentageOfSensitivity),str(mean2V),str(percentageOfExpectedSensititvity),str(differenceInPercentagesTsetSensitivity),str(p_value2),str(no_of_overlaps),str(percentageOfOverlaps),str(meanV),str(percentageOfExpectedOverlaps),str(differenceInPercentagesRedflyRecovered),str(p_value))
+							numberparse=int(numParse)
+				
+						#if user wants to evaluate only top good hits based on the composite curve method 
+						if goodHitsOnly == "True" or goodHitsOnly== "true" or goodHitsOnly== "TRUE" or goodHitsOnly =="T":
+							numParse,numScore,numAmp = topGoodPrediction(unsorted_indScrmOutputfile)
+							if continuous=="False" or continuous=="FALSE" or continuous=="F":
+								numberparse=numParse
+								print("Top pred after first(amplitude cutoff): " + str(numParse))
+						
+						else:
+							numParse=int(numParse)
+							print("user specified hits" + str(numParse))
+				
+						tab1=methods[num]								
+						#if user has set it up to find the continuous evaluation it will start fromm 100 and go up to max otherwise it would run only one time
+						while numberparse <= numParse:
+							print("Numparse "+str(numberparse)+" parse "+str(numParse))
+						
+							#creating files for keeping track of distribution of expression recovered crms 
+							fileE=open(outfile_random+'_ExpressionPatternRecovereyDistribution.bed','w')
+							with open(outfile_random+'_ExpressionPatternRecovereyDistribution.bed','a') as e:
+								e.write(stringOfSizes+'\n')
+								e.write(stringOfGroupNames+'\n')					
+					
+							#extract number of lines of peaks given by the user
+							noOflinesExtracted,unsorted_indScrmOutputfile=parse_output_individual(unsorted_indScrmOutputfile,numberparse,x,tab1)
+							#if user wants to evaluate top hits only then extract those and discard the rest of the data
+							if goodHitsOnly == "True" or goodHitsOnly== "true" or goodHitsOnly== "TRUE" or goodHitsOnly =="T":
+								noOflinesExtracted,unsorted_indScrmOutputfile=extract_below_cutoff_vals(unsorted_indScrmOutputfile,numberparse,x,tab1,numScore,numAmp)
+								print('Number of Top Predictions: '+str(noOflinesExtracted))
+						
+							#sorting and merging the each unique scrmshaw output file (the files that have been created earlier by d_imm dictionary for each different data set > probably unsorted.)
+							sortedMergedScrmsFilePath,numOfsortedMergedPredictedCrms=sort_and_merge_output(x,tab1,unsorted_indScrmOutputfile)	
+				
+							#creating a modified list of redfly files(FULLCRMS and subsetExpressionMappedCrmsBedFormat) will be called as "modifiedCrms2010 and ModifiedCrms" which will not have the crms that were used as training set for scrmshaw
+	
+							#excluding training set crms from redfly file and expression mapped file..based on names...will have modified and excluded file 
+							totalKcrms,countModifiedCrms,excludedCrmsCount,modifiedCrmsFilePath,excludedCrmsFilePath= exclude_training_set_crms("redfly",x,tab1,x,fullCrms)
+							totalKSubsetcrms,countSubsetModifiedCrms,excludedSubsetCrmsCount,modifiedSubsetCrmsFilePath,excludedSubsetCrmsFilePath= exclude_training_set_crms("expressionMapped",x,tab1,x,expressionMappedCrmsBedFormat)
+							
+							#Total known crms in both redfly files and expression mapped file after sorting and merging
+							size_of_sortedMergedCrms=sort_merge_redfly_find_size("redfly",fullCrms,x,tab1)
+							size_of_sortedMergedSubsetCrms=sort_merge_redfly_find_size("expressionMapped",expressionMappedCrmsBedFormat,x,tab1)
 
-						table_file(outfile,printList)											
-						print("Done",t,"set of length",numberparse)
-						t=t+1
-						if continuous=="True" or continuous=="TRUE" or continuous=="T":	
-							print("adding 250 to numparse")
-						numberparse=numberparse+250
-		#final transposing of the file
-		transposeDistributionFile(outfile)
+							#converting to bed format
+							sortedMergedScrmsBed=bed_conversion(sortedMergedScrmsFilePath)
+							excludedCrmsFilePathBed=bed_conversion(excludedCrmsFilePath)
+						
+																					############THREE MEASURES OF EVALUATION###############
+						
+							#`-------------------------------------	1: Tset Sensitivity---------------------------
+							print("Calculating Training set Sensitivity")
+							#sorting excluded crms
+							sortedExcludedCrms=sort_and_merge_tset(excludedCrmsFilePathBed,x,tab1)		
+							#BED conversion
+							sortedExcludedCrmsBed=bed_conversion(sortedExcludedCrms)
+							countCommonScrmAndExcluded=intersect_Scrm_and_Excluded_crms(x,tab1,sortedMergedScrmsBed,sortedExcludedCrmsBed)
+							#print("TsetRecovered "+str(countCommonScrmAndExcluded))	
+							#percentage of sensitivity of result
+							#percentageOfSensitivity="{0:.2f}%".format((countCommonScrmAndExcluded/excludedCrmsCount)*100) #or  equal print(len(d[x]))
+							try:
+								percentageOfSensitivity=countCommonScrmAndExcluded/excludedCrmsCount
+							except ZeroDivisionError:
+								np.seterr(divide='ignore', invalid='ignore')
+								percentageOfSensitivity=0
+							#print("Percent True Training set Recovered "+str(percentageOfSensitivity))	
+			
+							#calculating expected Training set Recovery
+							ex=os.path.abspath(exons)
+							g=os.path.abspath(drosoGenome)
+							#Generating random data from genome and finding Significance of SCRMSHAW training set sensitivity
+							mean2V,med2V,sd2V,min2Val,max2Val,stats2,z_value2,p_value2=shuffle(sortedExcludedCrmsBed,sortedMergedScrmsBed,ex,g,countCommonScrmAndExcluded,int(numberOfShuffles))
+							#percentage of expected sensitivity of result
+							try:
+								percentageOfExpectedSensititvity=(mean2V/excludedCrmsCount)
+							except ZeroDivisionError:
+								np.seterr(divide='ignore', invalid='ignore')
+								percentageOfExpectedSensititvity=0
+							#calculating differences in percentages of sensitivity of scrms vs expected 
+							#differenceInPercentagesTsetSensitivity= "{0:.2f}".format(((countCommonScrmAndExcluded/excludedCrmsCount)*100)-((mean2V/excludedCrmsCount)*100))
+							try:
+								differenceInPercentagesTsetSensitivity= (countCommonScrmAndExcluded/excludedCrmsCount)-((mean2V/excludedCrmsCount))
+							except ZeroDivisionError:
+								np.seterr(divide='ignore', invalid='ignore')
+								differenceInPercentagesTsetSensitivity=0
+							#print("Percent Random Training set Recovered "+str(percentageOfExpectedSensititvity))	
+				
+							#	--------------------------------2: REDfly Recovery ----------------------------
+							print("Calculating REDfly Recovery")
+							#sorting and merging the files of modified crm(redfly files excluding tsets crms)
+							sortedMergedModifiedCrmsFilePath,sizeOfSortedMergedModifiedCrms=sort_and_merge_modifiedCrms("redfly",modifiedCrmsFilePath,x,tab1)
+							
+							#converting to bed format
+							
+							#print(sortedMergedModifiedCrmsFilePath)
+							#print(sortedMergedScrmsFilePath)
+							sortedMergedModifiedCrmsBed=bed_conversion(sortedMergedModifiedCrmsFilePath)
+					
+							#Finding the "Number of HITS" (common crms between modified crms and the individual parsed sorted+merged scrmshaw output)
+							no_of_overlaps2,pathOfIntersectResult=intersect_scrms_and_modifiedCrms("redfly",x,tab1,sortedMergedModifiedCrmsBed,sortedMergedScrmsBed)
+							#print("no of overlaps 2 now ",no_of_overlaps2)
+							#print(pathOfIntersectResult)
+							#for calculating number of redfly recovered 
+							#no_of_overlaps=redfly_recovered(pathOfIntersectResult)
+							pathOfIntersectResultBed=bed_conversion(pathOfIntersectResult)
+							no_of_overlaps=pathOfIntersectResultBed.count()
+							#print("actual overlap is ",no_of_overlaps)
+						
+							percentageOfOverlaps=(no_of_overlaps/(numOfsortedMergedPredictedCrms-countCommonScrmAndExcluded))
+							#print("Percent True Redfly Recovered =: "+str(percentageOfOverlaps))
+						
+							print("Calculating REDfly Recovery Recall")
+							#Recall/Sensitivity of REDfly recovery TP/TP+FN .. True positive=SCRMs recovered REDfly CRMs, False Negative= Total REDfly CRMs - True Positives
+							percentageRecallREDfly=(no_of_overlaps/(no_of_overlaps+(sizeOfSortedMergedModifiedCrms-no_of_overlaps)))
+						
+							##calculating expected REDfly Recovery
+							#Generating random data from genome and finding Significance of SCRMSHAW no of hits
+							meanV,medV,sdV,minVal,maxVal,stats,z_value,p_value=shuffle(sortedMergedModifiedCrmsBed,sortedMergedScrmsBed,ex,g,no_of_overlaps,int(numberOfShuffles))
+							
+							#print("Exp Redfly Recovered =: "+str(meanV))		
+							#Percentage of Expected redfly recovered
+							percentageOfExpectedOverlaps=(meanV/(numOfsortedMergedPredictedCrms-countCommonScrmAndExcluded))
+							#print("Percent Random Expectation Redfly Recovered =: "+str(percentageOfExpectedOverlaps))	
+						
+							#Difference in percentages of scrms and expected redfly recovered
+							differenceInPercentagesRedflyRecovered=((no_of_overlaps/numOfsortedMergedPredictedCrms))-((meanV/numOfsortedMergedPredictedCrms))		
+						
+						
+							#	--------------------------------3:Expression Pattern Precision-------------------------------------
+							print("Calculating Expression pattern Precision and Recall")
+							#basically repeat all the steps that we did with actual redfly like extract tset from the prediction file and then intersect it ..etc
+						
+							#sorting and merging the files of modified expression mapped crm(expression mapped redfly files excluding tsets crms)
+							#sortedMergedModifiedSubsetCrmsFilePath,sizeOfSortedMergedModifiedSubsetCrms=sort_and_merge_modifiedCrms("expressionMapped",modifiedSubsetCrmsFilePath,x,tab1,)
+							sortedMergedModifiedSubsetCrmsFilePath,sizeOfSortedMergedModifiedSubsetCrms=sort_expressionMappedCrms("expressionMapped",modifiedSubsetCrmsFilePath,x,tab1,)
+							sortedMergedModifiedSubsetCrmsBed=bed_conversion(sortedMergedModifiedSubsetCrmsFilePath)
+
+						
+																##-----------expression pattern Recovery
+							#for finding out no of hits matched to expected expression we need to intersect file of subset(because that is the file of those crms having some expression)
+							no_of_overlapsSubset,pathOfSubsetIntersectResult= intersect_scrms_and_modifiedCrms("expressionMapped",x,tab1,sortedMergedModifiedSubsetCrmsBed,sortedMergedScrmsBed)
+							pathOfSubsetIntersectResultBed=bed_conversion(pathOfSubsetIntersectResult)
+							no_of_overlapsX=pathOfSubsetIntersectResultBed.count()
+							#print("Expression Pattern Recovered =: "+str(no_of_overlapsSubset))							
+							#print("recovery defined by : num of scrms recovered any crms from redfly expr mapped file divide by total num of predictions excl ones used for tset")
+							percentageOfHitsRecoveredExpressionPattern=no_of_overlapsSubset/(numOfsortedMergedPredictedCrms-countCommonScrmAndExcluded)
+							#print("Percent Expression Pattern Recovered =: "+str(percentageOfHitsRecoveredExpressionPattern))	
+						
+							#Generating random data from genome and finding Significance of SCRMSHAW no of hits
+							meanExp,medExp,sdExp,minVExp,maxVExp,statsExp,zExp,pExp=shuffle(sortedMergedModifiedSubsetCrmsBed,sortedMergedScrmsBed,ex,g,no_of_overlapsX,int(numberOfShuffles))
+												
+							#Percentage of Expected expression pattern recovered
+							#print("Expected Expression Pattern Recovered =: "+str(meanExp))
+							percentageOfExpectedHitsRecoveredExpressionPattern=meanExp/(numOfsortedMergedPredictedCrms-countCommonScrmAndExcluded)
+							#print("Percent Expected Expression Pattern Recovered =: "+ str(percentageOfExpectedHitsRecoveredExpressionPattern))	
+
+						
+																#---------Overlap with shared annotation (Precision)
+							#calculating expected Precision
+							# getting number of crms predicted by scrmshaw that matches with expected expression pattern
+							hitsMatchedExpression,numberOfKnownCrmsCausesExpressionInTset,numberOfAnyPatternRecovered=parse_intersected_scrmshaw("expressionMapped",outfile,x,pathOfSubsetIntersectResult,tab1)
+						
+						
+							#Expression Pattern Precision: TP/TP+FP..... True Positives= SCRMs with correct expression pattern...False Positive=SCRMs with incorrect expression pattern (SCRMs with any pattern - TP)
+							percentageExpressionPatternPrecision=hitsMatchedExpression/numberOfAnyPatternRecovered
+							#print("Percent Precision =: "+str(percentageExpressionPatternPrecision))	
+						
+							#Expression Pattern Recall/Sensitivity: TP/TP+FN ..... True Positives= SCRMs with correct expression pattern..False Negative= Total Known CRMs with Expression Pattern in Training set - TP
+							percentageExpressionPatternRecall= hitsMatchedExpression/(hitsMatchedExpression+(numberOfKnownCrmsCausesExpressionInTset-hitsMatchedExpression))
+						
+							#trying to see the expected distribtuion across all the sets..
+							#print("Random Expectation Values")
+							percentageExpressionPatternPrecisionExp=[]
+							for i in range(numberOfShuffles):
+								shuffled2=sortedMergedScrmsBed.shuffle(excl=ex, noOverlapping=True, g=g).sort().saveas('shuffled')	
+								shuffledpath=os.path.abspath('shuffled')
+								shuffledBed=bed_conversion(shuffledpath)		
+								no_of_overlapsR,pathOfIntersectResultR=intersect_scrms_and_modifiedCrms("expressionMappedS",x,tab1,sortedMergedModifiedSubsetCrmsBed,shuffledBed)		
+							
+							
+								hitsMatchedExpressionExp,numberOfKnownCrmsCausesExpressionInTsetExp,numberOfAnyPatternRecoveredExp=parse_intersected_scrmshaw("expressionMappedS",outfile_random,x,pathOfIntersectResultR,tab1)
+								percentageExpressionPatternPrecisionExp.append(hitsMatchedExpressionExp/numberOfAnyPatternRecoveredExp)
+							
+							#calculating summary stats for the expected distribution result
+					
+							#calculating p values for Precision 
+							#get summary stats 
+							maxRspec=max(percentageExpressionPatternPrecisionExp)
+							minRspec=min(percentageExpressionPatternPrecisionExp)
+							meanRspec=statistics.mean(percentageExpressionPatternPrecisionExp)
+							medianRspec=statistics.median(percentageExpressionPatternPrecisionExp)
+							sdRspec=statistics.stdev(percentageExpressionPatternPrecisionExp)
+							#print("Median Percent Precision Expected =: "+str(medianRspec))	
+							summary_stats="Mean= "+ str(meanRspec)+"\nMedian= "+str(medianRspec)+"\nStandard Deviation= "+str(sdRspec)+"\nMinimum value= "+str(minRspec)+"\nMaximum Value= "+str(maxRspec)
+
+							#from a_and_b_count and mean sd of above array
+							#print(a_and_b_count)
+							try:	
+								zRspec=float((percentageExpressionPatternPrecision-meanRspec)/sdRspec)
+								#print(zRspec)
+								#pRspec=stats.norm.sf(float(abs(zRspec)))
+								pRspec= 1 - scipy.special.ndtr(zRspec)
+								#print(pRspec)
+							except ZeroDivisionError:
+								np.seterr(divide='ignore', invalid='ignore')
+								pRspec=0
+							#return mean,median,sd,minV,maxV,summary_stats,z,p
+						
+							differenceInPercentagesExpressionPatternRecovered=percentageExpressionPatternPrecision-meanRspec
+						
+							### Following lines of code calculates and write fold enrichment along with the Precision of individual sets in the Expression Pattern Distribtuiton File
+						
+							calculating_sum_stats_random_file(outfile)
+							#calculating fold enrichment 
+							calculateFoldEnrichment(outfile,x,tab1)
+						
+							#temporary transpose and displaying on the terminal
+							transposeDistributionFile_temp(outfile,x)
+							#max_FE(outfile,x)
+
+							#writing to files depending upon _condition applied depending upon if Expression Pattern Recovery step is needed or not
+							printList=[]
+						
+							if patternRecovery=='True' or  patternRecovery == "T" or patternRecovery=="TRUE":
+								printList.extend([x,tab1,str(excludedCrmsCount),str(size_of_sortedMergedSubsetCrms),str(sizeOfSortedMergedModifiedSubsetCrms),str(size_of_sortedMergedCrms),str(sizeOfSortedMergedModifiedCrms),str(numOfsortedMergedPredictedCrms),str(countCommonScrmAndExcluded),str(percentageOfSensitivity),str(mean2V),str(percentageOfExpectedSensititvity),str(differenceInPercentagesTsetSensitivity),str(p_value2),str(no_of_overlaps),str(percentageOfOverlaps),str(meanV),str(percentageOfExpectedOverlaps),str(differenceInPercentagesRedflyRecovered),str(p_value),str(percentageRecallREDfly),str(numberOfKnownCrmsCausesExpressionInTset),str(no_of_overlapsSubset),str(percentageOfHitsRecoveredExpressionPattern),str(meanExp),str(percentageOfExpectedHitsRecoveredExpressionPattern),str(hitsMatchedExpression),str(numberOfAnyPatternRecovered),str(percentageExpressionPatternPrecision),str(meanRspec),str(pRspec),str(differenceInPercentagesExpressionPatternRecovered),str(percentageExpressionPatternRecall)]) 
+								#table_file(outfile,printList)
+								#table_file(outfile,x,tab1,str(excludedCrmsCount),str(size_of_sortedMergedSubsetCrms),str(sizeOfSortedMergedModifiedSubsetCrms),str(size_of_sortedMergedCrms),str(sizeOfSortedMergedModifiedCrms),str(numOfsortedMergedPredictedCrms),str(countCommonScrmAndExcluded),str(percentageOfSensitivity),str(mean2V),str(percentageOfExpectedSensititvity),str(differenceInPercentagesTsetSensitivity),str(p_value2),str(no_of_overlaps),str(percentageOfOverlaps),str(meanV),str(percentageOfExpectedOverlaps),str(differenceInPercentagesRedflyRecovered),str(p_value),str(numberOfKnownCrmsCausesExpressionInTset),str(no_of_overlapsSubset),str(percentageOfHitsRecoveredExpressionPattern),str(meanExp),str(percentageOfExpectedHitsRecoveredExpressionPattern),str(hitsMatchedExpression),str(numberOfAnyPatternRecovered),str(percentageExpressionPatternPrecision),str(meanRspec),str(pRspec),str(differenceInPercentagesExpressionPatternRecovered))						
+							else:
+								printList.extend([x,tab1,str(excludedCrmsCount),str(size_of_sortedMergedCrms),str(sizeOfSortedMergedModifiedCrms),str(numOfsortedMergedPredictedCrms),str(countCommonScrmAndExcluded),str(percentageOfSensitivity),str(mean2V),str(percentageOfExpectedSensititvity),str(differenceInPercentagesTsetSensitivity),str(p_value2),str(no_of_overlaps),str(percentageOfOverlaps),str(meanV),str(percentageOfExpectedOverlaps),str(differenceInPercentagesRedflyRecovered),str(p_value),str(percentageRecallREDfly)])
+								#table_file_excludingExpressionRecovered(outfile,printList)
+								#table_file_excludingExpressionRecovered(outfile,x,tab1,str(excludedCrmsCount),str(size_of_sortedMergedCrms),str(sizeOfSortedMergedModifiedCrms),str(numOfsortedMergedPredictedCrms),str(countCommonScrmAndExcluded),str(percentageOfSensitivity),str(mean2V),str(percentageOfExpectedSensititvity),str(differenceInPercentagesTsetSensitivity),str(p_value2),str(no_of_overlaps),str(percentageOfOverlaps),str(meanV),str(percentageOfExpectedOverlaps),str(differenceInPercentagesRedflyRecovered),str(p_value))
+
+							table_file(outfile,printList)											
+							print("Done",t,"set of length",numberparse)
+							t=t+1
+							if continuous=="True" or continuous=="TRUE" or continuous=="T":	
+								print("adding 250 to numparse")
+							numberparse=numberparse+250
+			#final transposing of the file
+			transposeDistributionFile(outfile)
 		
-		print("Done")
+			print("Done")
 		
 #-------------------------------------------------------------------------------------------------------------------		
 	#if the algorithm used for prediction is not SCRMshaw then it would go through these steps
@@ -1308,6 +1345,7 @@ def main():
 				e.write(stringOfGroupNames+'\n')
 			#1: PREDICTION post processing
 			unsorted_indScrmOutputfile=predictionsInBed
+			#print(unsorted_indScrmOutputfile,numberparse,x,tab1)
 			noOflinesExtracted,unsorted_indScrmOutputfile=parse_output_individual(unsorted_indScrmOutputfile,numberparse,x,tab1)
 			
 			#sorting and merging the each unique scrmshaw output file (the files that have been created earlier by d_imm dictionary for each different data set > probably unsorted.)
@@ -1325,7 +1363,7 @@ def main():
 			expressionMappedCrmsBedFormatBED=bed_conversion(expressionMappedCrmsBedFormat)
 		
 			#if training set provided is not in bed then extract tset coordinates information from REDfly based on the names in the list provided through creating dictionary
-			if tsetBedOrNot=="False" or tsetBedOrNot=="F" or tsetBedOrNot=="FALSE":
+			if tsetBedOrNot=="LIST" or tsetBedOrNot=="list" or tsetBedOrNot=="notBed" or tsetBedOrNot=="List":
 				#find out method and set name from the user 
 				x='mapping1.adult_mesoderm'
 				tab1='imm'
@@ -1343,7 +1381,7 @@ def main():
 				totalKSubsetcrms,countSubsetModifiedCrms,excludedSubsetCrmsCount,modifiedSubsetCrmsFilePath,excludedSubsetCrmsFilePath= exclude_training_set_crms("expressionMapped",x,tab1,x,expressionMappedCrmsBedFormat)
 			
 			#if the training set is in bed format then using its coordinate information for evaluation purpose, e.g to find out sensitivity and recovery etc
-			else: 
+			elif tsetBedOrNot=="BED" or tsetBedOrNot=="bed" or tsetBedOrNot=="Bed" or tsetBedOrNot=="notList":
 				excludedCrmsFilePath=bedTsetFormat
 				excludedCrmsFilePathBed=bed_conversion(excludedCrmsFilePath)
 				#size of tset
@@ -1435,6 +1473,7 @@ def main():
 			#basically repeat all the steps that we did with actual redfly like extract tset from the prediction file and then intersect it ..etc
 		
 			##expression pattern recovery
+			#print("expressionMapped",modifiedSubsetCrmsFilePath,whichSetToLookFor,tab1)
 			sortedMergedModifiedSubsetCrmsFilePath,sizeOfSortedMergedModifiedSubsetCrms=sort_expressionMappedCrms("expressionMapped",modifiedSubsetCrmsFilePath,whichSetToLookFor,tab1)
 			sortedMergedModifiedSubsetCrmsBed=bed_conversion(sortedMergedModifiedSubsetCrmsFilePath)		
 			#for finding out no of hits matched to expected expression we need to intersect file of subset(because that is the file of those crms having some expression)
@@ -1467,7 +1506,7 @@ def main():
 			#print("Percent Precision =: "+str(percentageExpressionPatternPrecision))	
 			
 			#Expression Pattern Recall/Sensitivity: TP/TP+FN ..... True Positives= SCRMs with correct expression pattern..False Negative= Total Known CRMs with Expression Pattern in Training set - TP
-			percentageExpressionPatternRecall= hitsMatchedExpression/(hitsMatchedExpression+(numberOfKnownCrmsCausesExpressionInTset-hitsMatchedExpression))
+			#percentageExpressionPatternRecall= hitsMatchedExpression/(hitsMatchedExpression+(numberOfKnownCrmsCausesExpressionInTset-hitsMatchedExpression))
 			
 			#print("testing Random Expectations Spec")
 			percentageExpressionPatternPrecisionExp= []
@@ -1476,7 +1515,7 @@ def main():
 				shuffled2=sortedMergedScrmsBed.shuffle(excl=ex, noOverlapping=True, g=g).sort().saveas('shuffled')	
 				shuffledpath=os.path.abspath('shuffled')
 				shuffledBed=bed_conversion(shuffledpath)		
-				no_of_overlapsR,pathOfIntersectResultR=intersect_scrms_and_modifiedCrms("expressionMapped",whichSetToLookFor,tab1,sortedMergedModifiedSubsetCrmsBed,shuffledBed)		
+				no_of_overlapsR,pathOfIntersectResultR=intersect_scrms_and_modifiedCrms("expressionMappedS",whichSetToLookFor,tab1,sortedMergedModifiedSubsetCrmsBed,shuffledBed)		
 				
 				hitsMatchedExpressionExp,numberOfAnyPatternRecoveredExp=parse_intersected(outfile_random,pathOfIntersectResultR,whichSetToLookFor,tab1)
 				percentageExpressionPatternPrecisionExp.append(hitsMatchedExpressionExp/numberOfAnyPatternRecoveredExp)
@@ -1517,9 +1556,12 @@ def main():
 			
 			#writing to files depending upon _condition applied depending upon if Expression Pattern Recovery step is needed or not			
 			if patternRecovery=='True' or  patternRecovery == "T" or patternRecovery=="TRUE":
+				#Expression Pattern Recall/Sensitivity: TP/TP+FN ..... True Positives= SCRMs with correct expression pattern..False Negative= Total Known CRMs with Expression Pattern in Training set - TP
+				percentageExpressionPatternRecall= hitsMatchedExpression/(hitsMatchedExpression+(numberOfKnownCrmsCausesExpressionInTset-hitsMatchedExpression))
+			
 				printList.extend([whichSetToLookFor,tab1,str(excludedCrmsCount),str(size_of_sortedMergedSubsetCrms),str(sizeOfSortedMergedModifiedSubsetCrms),str(size_of_sortedMergedCrms),str(sizeOfSortedMergedModifiedCrms),str(numOfsortedMergedPredictedCrms),str(countCommonScrmAndExcluded),str(percentageOfSensitivity),str(mean2V),str(percentageOfExpectedSensititvity),str(differenceInPercentagesTsetSensitivity),str(p_value2),str(no_of_overlaps),str(percentageOfOverlaps),str(meanV),str(percentageOfExpectedOverlaps),str(differenceInPercentagesRedflyRecovered),str(p_value),str(percentageRecallREDfly),str(no_of_overlapsSubset),str(percentageOfHitsRecoveredExpressionPattern),str(meanExp),str(percentageOfExpectedHitsRecoveredExpressionPattern),str(hitsMatchedExpression),str(numberOfAnyPatternRecovered),str(percentageExpressionPatternPrecision),str(meanRspec),str(pRspec),str(differenceInPercentagesExpressionPatternRecovered),str(percentageExpressionPatternRecall)])
 			else:
-				printList.extend([whichSetToLookFor,tab1,str(excludedCrmsCount),str(size_of_sortedMergedSubsetCrms),str(sizeOfSortedMergedModifiedSubsetCrms),str(size_of_sortedMergedCrms),str(sizeOfSortedMergedModifiedCrms),str(numOfsortedMergedPredictedCrms),str(countCommonScrmAndExcluded),str(percentageOfSensitivity),str(mean2V),str(percentageOfExpectedSensititvity),str(differenceInPercentagesTsetSensitivity),str(p_value2),str(no_of_overlaps),str(percentageOfOverlaps),str(meanV),str(percentageOfExpectedOverlaps),str(differenceInPercentagesRedflyRecovered),str(p_value),str(percentageRecallREDfly)])
+				printList.extend([whichSetToLookFor,tab1,str(excludedCrmsCount),str(size_of_sortedMergedCrms),str(sizeOfSortedMergedModifiedCrms),str(numOfsortedMergedPredictedCrms),str(countCommonScrmAndExcluded),str(percentageOfSensitivity),str(mean2V),str(percentageOfExpectedSensititvity),str(differenceInPercentagesTsetSensitivity),str(p_value2),str(no_of_overlaps),str(percentageOfOverlaps),str(meanV),str(percentageOfExpectedOverlaps),str(differenceInPercentagesRedflyRecovered),str(p_value),str(percentageRecallREDfly)])
 			#	if tsetBedOrNot=="False" or tsetBedOrNot=="F" or tsetBedOrNot=="FALSE":
 				#table_file_nonScrmshaw(outfile,x,tab1,str(excludedCrmsCount),str(size_of_sortedMergedSubsetCrms),str(sizeOfSortedMergedModifiedSubsetCrms),str(size_of_sortedMergedCrms),str(sizeOfSortedMergedModifiedCrms),str(numOfsortedMergedPredictedCrms),str(countCommonScrmAndExcluded),str(percentageOfSensitivity),str(mean2V),str(percentageOfExpectedSensititvity),str(differenceInPercentagesTsetSensitivity),str(p_value2),str(no_of_overlaps),str(percentageOfOverlaps),str(meanV),str(percentageOfExpectedOverlaps),str(differenceInPercentagesRedflyRecovered),str(p_value),str(no_of_overlapsSubset),str(percentageOfHitsRecoveredExpressionPattern),str(numberOfAnyPatternRecovered),str(meanExp),str(percentageOfExpectedHitsRecoveredExpressionPattern),str(differenceInPercentagesExpressionPatternRecovered),str(pExp))
 			table_file(outfile,printList)
@@ -1537,6 +1579,4 @@ def main():
 		#for calculation of max fold enrichment and max percent Precision
 		max_FE(outfile,x)
 main()	
-#./generic_evaluationPipeline_scrmshawIncl.py -nameOfmet SCRMshaw -so scrmshawOutput_orig_2sets_5000hits.bed -fullredfly without_chrallredfly_2.5kb.July2017.txt -tset False -listTset trainingset_assignments_2010.txt -pattern TRUE -subsetcrmsExpBed without_chrredfly-analysis-set.assignments.2015.REDFly_format.txt -finalcrmsExp redfly_analysis_set.assignments.2015.txt -e exons.bed -drosog genome_chr_lengths_r6_copy.txt -o outfile_test_cont_5k -cont True -goodHits False -p 5000
-#./generic_evaluationPipeline_scrmshawIncl.py -nameOfmet imogene -predInBed scrms.merged.bed -fullredfly allredfly_2.5kb.July2017.txt -tset False -listTset trainingset_assignments_2010.txt -pattern TRUE -subsetcrmsExpBed redfly-analysis-set.assignments.2015.REDFly_format.txt -finalcrmsExp redfly_analysis_set.assignments.2015.txt -e exons.bed -drosog genome_chr_lengths_r6_copy.txt -o scrmshawModifiedPipelineOutput_notScrmshawInput_tsetList_adultMesoImm_100shuffle_500preds_writeToFile -cont False -goodHits False -p 500 -s 10 -pattern True
-#./evaluationPipeline_withFE.py -nameOfmet pnas -predInBed allPredictions_withoutChr.txt -fullredfly allredfly_2.5kb.July2017.txt -bedTset pnas_Tset_withoutChr.txt -pattern True -subsetcrmsExpBed redfly-analysis-set.assignments.2015.REDFly_format.txt -finalcrmsExp redfly_analysis_set.assignments.2015.txt -e exons.bed -drosog genome_chr_lengths_r6_copy.txt -o testingPnas -cont False -goodHits False -p 7000 -s 10 -tset True -which mapping1.blastoderm
+#python pCRMeval.py -nameOfmet SCRMshaw -fullredfly batch.txt -subsetcrmsExpBed redfly-analysis-set.assignments.2015.REDFly_format.txt -finalcrmsExp redfly_analysis_set.assignments.2015.txt -tset list -listTset trainingset_assignments_2010_2.txt  -e exons.bed -drosog genome_chr_lengths_r6_copy.txt -so scrmshawOutput_peaksCalled_mapping1.ectoderm_imm_1017_peaks.bed -o new_ecto_all -cont False -goodHits False -p 10000 -s 10 -pattern True
