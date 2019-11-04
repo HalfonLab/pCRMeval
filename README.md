@@ -14,7 +14,7 @@
 	4. OUTPUT
 
 
-#1. INPUT
+**#1. INPUT**
 
 Following files are required to run the script. Most of these required files can be downloaded from our github site. All you need to provide is the set of predictions in bed format and the training set used (in bed or list format) in case of Supervised Method.\
 i) Set of predictions in bed format. (SCRMshaw-HD or any other method's output)\
@@ -27,17 +27,16 @@ vi) Expression Mapped CRMs: These are the expression-mapped CRMs, use to assess 
 vii) Expression Mapped CRMs in BED format: This will be the bed formatted version of above file. It will have the coordinates with the names of crms.
 
 
-#2.  USAGE
+**#2.  USAGE **
 
 Following basic modules are required to run this script.Please make sure these modules have already been properly installed and are recognizable.
 pybedtools, statistics, scipy, numpy, pandas, csv and itertools
 
 For evaluating SCRMshaw output, following script could be used (just change the file names according to your data)
 
-python pCRMeval.py 
--nameOfmet SCRMshaw -fullredfly allredfly_2.5kb.July2017.txt -subsetcrmsExpBed redfly-analysis-set.assignments.2015.REDFly_format.txt -finalcrmsExp redfly_analysis_set.assignments.2015.txt -tsetBedOrList list -listTset trainingset_assignments_2010_2.txt -e exons.bed -drosog genome_chr_lengths_r6_copy.txt -so scrmshawOutput_peaksCalledover5kcrms_allSets_IMM.bed  -cont False -goodHits False -p 35000 -s 10 -pattern True -o output 
+*>python pCRMeval.py -nameOfmet SCRMshaw -fullredfly allredfly_2.5kb.July2017.txt -subsetcrmsExpBed redfly-analysis-set.assignments.2015.REDFly_format.txt -finalcrmsExp redfly_analysis_set.assignments.2015.txt -tsetBedOrList list -listTset trainingset_assignments_2010_2.txt -e exons.bed -drosog genome_chr_lengths_r6_copy.txt -so scrmshawOutput_peaksCalledover5kcrms_allSets_IMM.bed  -cont False -goodHits False -p 35000 -s 10 -pattern True -o output* 
 
-#3. PARAMETERS
+**#3. PARAMETERS**
 
 	-nameOfmet	<str>	SCRMshaw/ name of any other method 
 	-fullredfly	<str>	This file includes everything in REDfly annotated as a CRM, including evidence solely from cell culture experiments, that is no longer than 2.5kb in length. It'92s about 16,000 entities.  
@@ -57,7 +56,7 @@ python pCRMeval.py
 	-p 	<str>	Total number of predictions to start evaluation  from the predictions file. Default value is 35000
 	-s	<str>	Number of shuffles you want to for calculating the p-value of your data. Default value is 20
 
-#4. OUTPUT
+**#4. OUTPUT**
 
 The output will have following files.
 
