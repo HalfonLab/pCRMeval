@@ -34,7 +34,22 @@ pybedtools, statistics, scipy, numpy, pandas, csv and itertools
 
 For evaluating SCRMshaw output, following script could be used (just change the file names according to your data)
 
->python pCRMeval.py  -nameOfmet SCRMshaw  -fullredfly without_chrallredfly_2.5kb.July2017.txt  -subsetcrmsExpBed without_chrredfly-analysis-set.assignments.2015.REDFly_format.txt  -finalcrmsExp redfly_analysis_set.assignments.2015.txt  -tset False  -listTset trainingset_assignments_2010.txt  -pattern TRUE  -e exons.bed  -drosog genome_chr_lengths_r6_copy.txt  -so scrmshawOutput_peaksCalledover5kcrms_allSets_IMM.bed  -o output -cont False  -goodHits True  -p 35000  -s 10  -pattern True 
+python pCRMeval.py 
+-nameOfmet SCRMshaw 
+-fullredfly allredfly_2.5kb.July2017.txt 
+-subsetcrmsExpBed redfly-analysis-set.assignments.2015.REDFly_format.txt 
+-finalcrmsExp redfly_analysis_set.assignments.2015.txt 
+-tsetBedOrList list 
+-listTset trainingset_assignments_2010_2.txt  
+-e exons.bed 
+-drosog genome_chr_lengths_r6_copy.txt  
+-so scrmshawOutput_peaksCalledover5kcrms_allSets_IMM.bed  
+-cont False  
+-goodHits False  
+-p 35000  
+-s 10  
+-pattern True 
+-o output 
 
 #3. PARAMETERS
 
@@ -42,7 +57,7 @@ For evaluating SCRMshaw output, following script could be used (just change the 
 	-fullredfly	<str>	This file includes everything in REDfly annotated as a CRM, including evidence solely from cell culture experiments, that is no longer than 2.5kb in length. It'92s about 16,000 entities.  
 	-subsetcrmsExpBed <str>	These are the expression-mapped CRMs, use to assess training set specificity, in the form of list
 	-finalcrmsExp	<str>	This will be the bed formatted version of expression-mapped CRMs file. It will have the coordinates with the names of crms. 	
-	-tset	 <str>	This is the string variable, which takes the value of Bed or List depending on the format of the training set information
+	-tsetBedOrList	 <str>	This is the string variable, which takes the value of Bed or List depending on the format of the training set information
 	-listTset	<str>	If the training set information is in the form of list, provide its name here.
 	-bedTset	<str> If the training set information is in the form of bed, provide the name here.
 	-pattern	<str>	This is binary variable which take the value of True or False depending on if user wants to test the specificity of the training set. 
