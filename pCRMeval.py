@@ -539,7 +539,11 @@ def parse_intersected_scrmshaw(ftype,outfile,dSet,intersected,meth):
 
 			#fileE.write()
 			#print("denom"+str(len(d2[key]))+"nominator:"+str(countd[key]))
-			fileE.write(str(countd[key]/countHits)+'\t')
+			try:
+				fileE.write(str(countd[key]/countHits)+'\t')
+			except ZeroDivisionError:
+				np.seterr(divide='ignore', invalid='ignore')
+				fileE.write('0\t')
 		 	countd[key]=0
 		 
 		fileE.write('\n')
