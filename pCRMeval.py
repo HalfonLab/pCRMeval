@@ -1237,10 +1237,13 @@ def main():
 								shuffledBed=bed_conversion(shuffledpath)		
 								no_of_overlapsR,pathOfIntersectResultR=intersect_scrms_and_modifiedCrms("expressionMappedS",x,tab1,sortedMergedModifiedSubsetCrmsBed,shuffledBed)		
 							
-							
+								
 								hitsMatchedExpressionExp,numberOfKnownCrmsCausesExpressionInTsetExp,numberOfAnyPatternRecoveredExp=parse_intersected_scrmshaw("expressionMappedS",outfile_random,x,pathOfIntersectResultR,tab1)
-								percentageExpressionPatternPrecisionExp.append(hitsMatchedExpressionExp/numberOfAnyPatternRecoveredExp)
-							
+								try:
+									percentageExpressionPatternPrecisionExp.append(hitsMatchedExpressionExp/numberOfAnyPatternRecoveredExp)
+								except ZeroDivisionError:
+									np.seterr(divide='ignore', invalid='ignore')
+									percentageExpressionPatternPrecisionExp.append(0)
 							#calculating summary stats for the expected distribution result
 					
 							#calculating p values for Precision 
