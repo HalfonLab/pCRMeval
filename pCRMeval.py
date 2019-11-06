@@ -741,7 +741,7 @@ def topGoodPrediction(unsorted_indScrOutputfile):
 	ampAtElbow=valuesAmp[idxOfBestPointAmp]
 	#print(idxOfBestPointScore,idxOfBestPointAmp)
 	
-	return idxOfBestPointScore,scoreAtElbow,ampAtElbow
+	return idxOfBestPointAmp,scoreAtElbow,ampAtElbow
 	
 	
 #----------------------------------------------------------------------------------------------------------------------------
