@@ -710,6 +710,9 @@ def topGoodPrediction(unsorted_indScrOutputfile):
 	#print(valuesScore[idxOfBestPointScore])
 	scoreAtElbow=valuesScore[idxOfBestPointScore]
 	
+	print("rank of elbow score",idxOfBestPointScore)
+	print("elbow score itself",scoreAtElbow)
+	
 	#for amplitude cutoff
 	
 	valuesAmp=list(valuesAmp)
@@ -741,7 +744,22 @@ def topGoodPrediction(unsorted_indScrOutputfile):
 	ampAtElbow=valuesAmp[idxOfBestPointAmp]
 	#print(idxOfBestPointScore,idxOfBestPointAmp)
 	
-	return idxOfBestPointAmp,scoreAtElbow,ampAtElbow
+	print("elbow amplitude",ampAtElbow)
+	print("rank of elbow amplitude",idxOfBestPointAmp)
+	
+	#MEAN
+	medianAmp=statistics.median(valuesAmp)
+	print("median of amplitude curve is ",medianAmp)
+	#find the closest rank for the mean of the amplitude curve
+	closestValTomedian=min(valuesAmp,key=lambda x:abs(x-medianAmp))
+	print("closest value of amplitude to median of amplitude curve is ",closestValTomedian)
+	closestRankTomedian=valuesAmp.index(closestValTomedian)+1
+	print("rank of the closest value of amplitude to median of amplitude curve is ",closestRankTomedian)
+	
+
+	print("sending this value of rank of median outside this function",closestRankTomedian)
+	#return idxOfBestPointAmp,scoreAtElbow,ampAtElbow
+	return closestRankTomedian,scoreAtElbow,ampAtElbow
 	
 	
 #----------------------------------------------------------------------------------------------------------------------------
@@ -1086,8 +1104,8 @@ def main():
 							noOflinesExtracted,unsorted_indScrmOutputfile=parse_output_individual(unsorted_indScrmOutputfile,numberparse,x,tab1)
 							#if user wants to evaluate top hits only then extract those and discard the rest of the data
 							if goodHitsOnly == "True" or goodHitsOnly== "true" or goodHitsOnly== "TRUE" or goodHitsOnly =="T":
-								noOflinesExtracted,unsorted_indScrmOutputfile=extract_below_cutoff_vals(unsorted_indScrmOutputfile,numberparse,x,tab1,numScore,numAmp)
-								print('Number of Top Predictions: '+str(noOflinesExtracted))
+								#noOflinesExtracted,unsorted_indScrmOutputfile=extract_below_cutoff_vals(unsorted_indScrmOutputfile,numberparse,x,tab1,numScore,numAmp)
+								print('Number of Top Predictions same as before : '+str(noOflinesExtracted))
 						
 							#sorting and merging the each unique scrmshaw output file (the files that have been created earlier by d_imm dictionary for each different data set > probably unsorted.)
 							sortedMergedScrmsFilePath,numOfsortedMergedPredictedCrms=sort_and_merge_output(x,tab1,unsorted_indScrmOutputfile)	
