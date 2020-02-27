@@ -1023,7 +1023,7 @@ def main():
 		####creating necessary files for output
 		if patternRecovery=='True' or patternRecovery =="T" or patternRecovery == "TRUE" :
 			fin2=open(outfile+'.bed','w')
-			headingList.extend(["TsetName","Method","TsetSize","TotalREDfly","ModifiedREDfly","TotalREDfly2010","ModifiedREDfly2010","SCRMs","TrainingSetRecovered","PercentageTrainingSetSensitivity","ExpectedValueRandom","PercentageExpectedTrainingSetSensitivity","DifferencesInPercentagesActual&Expected","P_value","REDflyRecovered","PercentageRedflyRecovered","ExpectedOverlapRandom","PercentageExpectedOverlap","DifferencesInPercentagesActual&Expected","P_value","PercentageRecallREDflyRecovery","numberOfKnownCrmsCausesExpressionInTset","numOfSCRMsRecoveredExpMappedCrms","PercentagePatternRecovery","RandomREDflyRecoveredPattern","PercentageOfRandomPatternRecovered","numOfRecoveredSCrmsBelongingToOwnGroup","numOfRecoveredSCrmsBelongingToAnyGroup","percentageExpressionPatternPrecision","ExpectedpercentageExpressionPatternPrecision","P_value","DifferencesInPercentagesActual&ExpectedExpressionRecovered","percentageExpressionPatternRecall"])
+			headingList.extend(["TsetName","Method","TsetSize","TotalREDfly","ModifiedREDfly","TotalREDfly2010","ModifiedREDfly2010","SCRMs","TrainingSetRecovered","PercentageTrainingSetSensitivity","ExpectedValueRandom","PercentageExpectedTrainingSetSensitivity","DifferencesInPercentagesActual&Expected","P_value","REDflyRecovered","PercentageRedflyRecovered","ExpectedOverlapRandom","PercentageExpectedOverlap","DifferencesInPercentagesActual&Expected","P_value","PercentageRecallREDflyRecovery","numberOfKnownCrmsCausesExpressionInTset","numOfSCRMsRecoveredExpMappedCrms","PercentagePatternRecovery","RandomREDflyRecoveredPattern","PercentageOfRandomPatternRecovered","numOfRecoveredSCrmsBelongingToOwnGroup","numOfRecoveredSCrmsBelongingToAnyGroup","percentageExpressionPatternPrecision","ExpectedpercentageExpressionPatternPrecision","P_value","DifferencesInPercentagesActual&ExpectedExpressionRecovered","percentageExpressionPatternRecall","ExpectedpercentageExpressionPatternRecall"])
 			with open(outfile+'.bed','a') as h:
 				for things in headingList:
 					h.write(things+'\t')
@@ -1249,6 +1249,7 @@ def main():
 							#trying to see the expected distribtuion across all the sets..
 							#print("Random Expectation Values")
 							percentageExpressionPatternPrecisionExp=[]
+							percentageExpressionPatternRecallExp=[]
 							for i in range(numberOfShuffles):
 								shuffled2=sortedMergedScrmsBed.shuffle(excl=ex, noOverlapping=True, g=g).sort().saveas('shuffled')	
 								shuffledpath=os.path.abspath('shuffled')
@@ -1262,6 +1263,11 @@ def main():
 								except ZeroDivisionError:
 									np.seterr(divide='ignore', invalid='ignore')
 									percentageExpressionPatternPrecisionExp.append(0)
+								try:
+									percentageExpressionPatternRecallExp.append(hitsMatchedExpressionExp/numberOfKnownCrmsCausesExpressionInTsetExp)
+								except ZeroDivisionError:
+									np.seterr(divide='ignore', invalid='ignore')
+									percentageExpressionPatternRecallExp.append(0)
 							#calculating summary stats for the expected distribution result
 					
 							#calculating p values for Precision 
@@ -1273,7 +1279,8 @@ def main():
 							sdRspec=statistics.stdev(percentageExpressionPatternPrecisionExp)
 							#print("Median Percent Precision Expected =: "+str(medianRspec))	
 							summary_stats="Mean= "+ str(meanRspec)+"\nMedian= "+str(medianRspec)+"\nStandard Deviation= "+str(sdRspec)+"\nMinimum value= "+str(minRspec)+"\nMaximum Value= "+str(maxRspec)
-
+							
+							meanRspecRecall=statistics.mean(percentageExpressionPatternRecallExp)
 							#from a_and_b_count and mean sd of above array
 							#print(a_and_b_count)
 							try:	
@@ -1303,7 +1310,7 @@ def main():
 							printList=[]
 						
 							if patternRecovery=='True' or  patternRecovery == "T" or patternRecovery=="TRUE":
-								printList.extend([x,tab1,str(excludedCrmsCount),str(size_of_sortedMergedSubsetCrms),str(sizeOfSortedMergedModifiedSubsetCrms),str(size_of_sortedMergedCrms),str(sizeOfSortedMergedModifiedCrms),str(numOfsortedMergedPredictedCrms),str(countCommonScrmAndExcluded),str(percentageOfSensitivity),str(mean2V),str(percentageOfExpectedSensititvity),str(differenceInPercentagesTsetSensitivity),str(p_value2),str(no_of_overlaps),str(percentageOfOverlaps),str(meanV),str(percentageOfExpectedOverlaps),str(differenceInPercentagesRedflyRecovered),str(p_value),str(percentageRecallREDfly),str(numberOfKnownCrmsCausesExpressionInTset),str(no_of_overlapsSubset),str(percentageOfHitsRecoveredExpressionPattern),str(meanExp),str(percentageOfExpectedHitsRecoveredExpressionPattern),str(hitsMatchedExpression),str(numberOfAnyPatternRecovered),str(percentageExpressionPatternPrecision),str(meanRspec),str(pRspec),str(differenceInPercentagesExpressionPatternRecovered),str(percentageExpressionPatternRecall)]) 
+								printList.extend([x,tab1,str(excludedCrmsCount),str(size_of_sortedMergedSubsetCrms),str(sizeOfSortedMergedModifiedSubsetCrms),str(size_of_sortedMergedCrms),str(sizeOfSortedMergedModifiedCrms),str(numOfsortedMergedPredictedCrms),str(countCommonScrmAndExcluded),str(percentageOfSensitivity),str(mean2V),str(percentageOfExpectedSensititvity),str(differenceInPercentagesTsetSensitivity),str(p_value2),str(no_of_overlaps),str(percentageOfOverlaps),str(meanV),str(percentageOfExpectedOverlaps),str(differenceInPercentagesRedflyRecovered),str(p_value),str(percentageRecallREDfly),str(numberOfKnownCrmsCausesExpressionInTset),str(no_of_overlapsSubset),str(percentageOfHitsRecoveredExpressionPattern),str(meanExp),str(percentageOfExpectedHitsRecoveredExpressionPattern),str(hitsMatchedExpression),str(numberOfAnyPatternRecovered),str(percentageExpressionPatternPrecision),str(meanRspec),str(pRspec),str(differenceInPercentagesExpressionPatternRecovered),str(percentageExpressionPatternRecall),str(meanRspecRecall)]) 
 								#table_file(outfile,printList)
 								#table_file(outfile,x,tab1,str(excludedCrmsCount),str(size_of_sortedMergedSubsetCrms),str(sizeOfSortedMergedModifiedSubsetCrms),str(size_of_sortedMergedCrms),str(sizeOfSortedMergedModifiedCrms),str(numOfsortedMergedPredictedCrms),str(countCommonScrmAndExcluded),str(percentageOfSensitivity),str(mean2V),str(percentageOfExpectedSensititvity),str(differenceInPercentagesTsetSensitivity),str(p_value2),str(no_of_overlaps),str(percentageOfOverlaps),str(meanV),str(percentageOfExpectedOverlaps),str(differenceInPercentagesRedflyRecovered),str(p_value),str(numberOfKnownCrmsCausesExpressionInTset),str(no_of_overlapsSubset),str(percentageOfHitsRecoveredExpressionPattern),str(meanExp),str(percentageOfExpectedHitsRecoveredExpressionPattern),str(hitsMatchedExpression),str(numberOfAnyPatternRecovered),str(percentageExpressionPatternPrecision),str(meanRspec),str(pRspec),str(differenceInPercentagesExpressionPatternRecovered))						
 							else:
