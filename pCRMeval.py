@@ -544,7 +544,7 @@ def parse_intersected_scrmshaw(ftype,outfile,dSet,intersected,meth):
 			except ZeroDivisionError:
 				np.seterr(divide='ignore', invalid='ignore')
 				fileE.write('0\t')
-		 	countd[key]=0
+			countd[key]=0
 		 
 		fileE.write('\n')
 
@@ -643,13 +643,13 @@ def parse_intersected(outfile,intersected,dSet,meth):
 			for key in countd_random:
 					fileE.write(str(countd_random[key]/countHits)+'\t')
 					countd_random[key]=0
-		 	fileE.write('\n')
-		 		
+			fileE.write('\n')
+
 		else:
 
-		 	for keys in countd_random:
-		 		countd_random[keys]=0
-		 		
+			for keys in countd_random:
+				countd_random[keys]=0
+				
 	return(numberOfSCrmsMatchedToExpression,countHits)
 	
 
